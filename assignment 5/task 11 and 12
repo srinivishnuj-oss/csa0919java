@@ -1,0 +1,388 @@
+import java.util.Scanner;
+import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.LocalTime;
+
+interface Chargeable {
+    double chargingFee(int units);
+}
+
+interface ParkingPass {
+    boolean isValid();
+}
+
+class OneDayPass implements ParkingPass {
+
+    private boolean valid = true;
+
+    public boolean isValid() {
+        return valid;
+    }
+
+    public void usePass() {
+        valid = false;
+    }
+}
+
+abstract class Vehicle {
+
+    protected String regNo;
+    protected LocalDateTime entryTime;
+    protected int floor;
+    protected int slot;
+
+    public Vehicle(String regNo) {
+        this.regNo = regNo;
+    }
+
+    public String getRegNo() {
+        return regNo;
+    }
+
+    public void setEntryTime(LocalDateTime time) {
+        entryTime = time;
+    }
+
+    public abstract double calculateFee(int minutes);
+
+    public abstract String getType();
+}
+
+class TwoWheeler extends Vehicle {
+
+    public TwoWheeler(String regNo) {
+        super(regNo);
+    }
+
+    public double calculateFee(int minutes) {
+        int hours = (minutes + 59) / 60;
+        return hours * 10;
+    }
+
+    public String getType() {
+        return "Two Wheeler";
+    }
+}
+
+class Car extends Vehicle {
+
+    public Car(String regNo) {
+        super(regNo);
+    }
+
+    public double calculateFee(int minutes) {
+        int hours = (minutes + 59) / 60;
+        return hours * 30;
+    }
+
+    public String getType() {
+        return "Car";
+    }
+}
+
+class ElectricCar extends Car implements Chargeable {
+
+    public ElectricCar(String regNo) {
+        super(regNo);
+    }
+
+    public double chargingFee(int units) {
+        return units * 12;
+    }
+
+    public String getType() {
+        return "Electric Car";
+    }
+}
+
+class EBike extends Vehicle {
+
+    public EBike(String regNo) {
+        super(regNo);
+    }
+
+    public double calculateFee(int minutes) {
+        return 20;
+    }
+
+    public String getType() {
+        return "E-Bike";
+    }
+}
+
+class DeliveryVan extends Vehicle {
+
+    public DeliveryVan(String regNo) {
+        super(regNo);
+    }
+
+    public double calculateFee(int minutes) {
+
+        int hours = (minutes + 59) / 60;
+
+        LocalTime time = entryTime.toLocalTime();
+
+        if (!time.isBefore(LocalTime.of(9, 0))
+                && time.isBefore(LocalTime.of(17, 0))) {
+            return hours * 60;
+        }
+
+        return hours * 30;
+    }
+
+    public String getType() {
+        return "Delivery Van";
+    }
+}
+
+class ParkingFacility {
+
+    private final Vehicle[][] slots;
+
+    public ParkingFacility(int[] slotsPerFloor) {
+
+        slots = new Vehicle[slotsPerFloor.length][];
+
+        for (int i = 0; i < slotsPerFloor.length; i++) {
+            slots[i] = new Vehicle[slotsPerFloor[i]];
+        }
+    }
+
+    public int[] allocate(Vehicle vehicle) {
+
+        for (int f = 0; f < slots.length; f++) {
+            for (int s = 0; s < slots[f].length; s++) {
+
+                if (slots[f][s] == null) {
+                    slots[f][s] = vehicle;
+
+                    vehicle.floor = f;
+                    vehicle.slot = s;
+
+                    return new int[]{f, s};
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public boolean release(int floor, int slot) {
+
+        if (floor < 0 || floor >= slots.length) {
+            return false;
+        }
+
+        if (slot < 0 || slot >= slots[floor].length) {
+            return false;
+        }
+
+        if (slots[floor][slot] == null) {
+            return false;
+        }
+
+        slots[floor][slot] = null;
+        return true;
+    }
+
+    public Vehicle findVehicle(String regNo) {
+
+        for (Vehicle[] floor : slots) {
+            for (Vehicle vehicle : floor) {
+
+                if (vehicle != null
+                        && vehicle.getRegNo().equalsIgnoreCase(regNo)) {
+                    return vehicle;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public void displaySlots() {
+
+        System.out.println("\nParking Slots:");
+
+        for (int f = 0; f < slots.length; f++) {
+
+            System.out.println("Floor " + (f + 1));
+
+            for (int s = 0; s < slots[f].length; s++) {
+
+                if (slots[f][s] == null) {
+                    System.out.println("Slot " + (s + 1) + " : Empty");
+                } else {
+                    System.out.println("Slot " + (s + 1) + " : "
+                            + slots[f][s].getRegNo());
+                }
+            }
+        }
+    }
+}
+
+public class SmartParkingSystem {
+
+    static Scanner sc = new Scanner(System.in);
+
+    static ParkingFacility parking =
+            new ParkingFacility(new int[]{5, 4, 3, 4, 5});
+
+    static double totalCollection = 0;
+
+    public static void main(String[] args) {
+
+        int choice;
+
+        do {
+
+            System.out.println("\n===== SMART PARKING SYSTEM =====");
+            System.out.println("1. Vehicle Entry");
+            System.out.println("2. Vehicle Exit");
+            System.out.println("3. Display Parking Slots");
+            System.out.println("4. Display Total Collection");
+            System.out.println("5. Exit");
+            System.out.print("Enter choice: ");
+
+            choice = sc.nextInt();
+            sc.nextLine();
+
+            switch (choice) {
+
+                case 1:
+                    vehicleEntry();
+                    break;
+
+                case 2:
+                    vehicleExit();
+                    break;
+
+                case 3:
+                    parking.displaySlots();
+                    break;
+
+                case 4:
+                    System.out.println("Total Collection: Rs "
+                            + totalCollection);
+                    break;
+
+                case 5:
+                    System.out.println("System Closed");
+                    break;
+
+                default:
+                    System.out.println("Invalid Choice");
+            }
+
+        } while (choice != 5);
+    }
+
+    static void vehicleEntry() {
+
+        System.out.print("Enter Vehicle Number: ");
+        String regNo = sc.nextLine();
+
+        if (parking.findVehicle(regNo) != null) {
+            System.out.println("Vehicle Already Parked");
+            return;
+        }
+
+        System.out.println("1. Two Wheeler");
+        System.out.println("2. Car");
+        System.out.println("3. Electric Car");
+        System.out.println("4. E-Bike");
+        System.out.println("5. Delivery Van");
+
+        System.out.print("Select Vehicle Type: ");
+        int type = sc.nextInt();
+        sc.nextLine();
+
+        Vehicle vehicle;
+
+        switch (type) {
+
+            case 1:
+                vehicle = new TwoWheeler(regNo);
+                break;
+
+            case 2:
+                vehicle = new Car(regNo);
+                break;
+
+            case 3:
+                vehicle = new ElectricCar(regNo);
+                break;
+
+            case 4:
+                vehicle = new EBike(regNo);
+                break;
+
+            case 5:
+                vehicle = new DeliveryVan(regNo);
+                break;
+
+            default:
+                System.out.println("Invalid Vehicle Type");
+                return;
+        }
+
+        vehicle.setEntryTime(LocalDateTime.now());
+
+        int[] position = parking.allocate(vehicle);
+
+        if (position == null) {
+            System.out.println("Parking Full");
+            return;
+        }
+
+        System.out.println("Vehicle Entered Successfully");
+        System.out.println("Vehicle Type: " + vehicle.getType());
+        System.out.println("Floor: " + (position[0] + 1));
+        System.out.println("Slot: " + (position[1] + 1));
+        System.out.println("Entry Time: " + vehicle.entryTime);
+    }
+
+    static void vehicleExit() {
+
+        System.out.print("Enter Vehicle Number: ");
+        String regNo = sc.nextLine();
+
+        Vehicle vehicle = parking.findVehicle(regNo);
+
+        if (vehicle == null) {
+            System.out.println("Vehicle Not Found");
+            return;
+        }
+
+        LocalDateTime exitTime = LocalDateTime.now();
+
+        long minutes = Duration.between(
+                vehicle.entryTime, exitTime).toMinutes();
+
+        double fee = vehicle.calculateFee((int) minutes);
+
+        if (vehicle instanceof Chargeable) {
+
+            System.out.print("Enter Charging Units: ");
+            int units = sc.nextInt();
+            sc.nextLine();
+
+            Chargeable c = (Chargeable) vehicle;
+            fee += c.chargingFee(units);
+        }
+
+        System.out.println("\n===== PARKING BILL =====");
+        System.out.println("Vehicle Number: " + vehicle.getRegNo());
+        System.out.println("Vehicle Type: " + vehicle.getType());
+        System.out.println("Entry Time: " + vehicle.entryTime);
+        System.out.println("Exit Time: " + exitTime);
+        System.out.println("Duration: " + minutes + " minutes");
+        System.out.println("Parking Fee: Rs " + fee);
+
+        totalCollection += fee;
+
+        parking.release(vehicle.floor, vehicle.slot);
+
+        System.out.println("Vehicle Exit Successfully");
+    }
+}
