@@ -1,0 +1,105 @@
+import java.awt.*;
+import javax.swing.*;
+
+public class LibrarySearch extends JFrame {
+
+    JTextField searchField = new JTextField(20);
+
+    JComboBox<String> category = new JComboBox<>(
+            new String[]{"Book", "Author", "Subject"});
+
+    JTextArea results = new JTextArea();
+
+    JLabel status = new JLabel("Ready");
+
+    JButton search = new JButton("Search");
+    JButton prev = new JButton("Prev");
+    JButton next = new JButton("Next");
+    JButton reserve = new JButton("Reserve");
+
+    LibrarySearch() {
+
+        setTitle("Campus Library Search");
+        setLayout(new BorderLayout());
+
+        // Search Panel
+        JPanel top = new JPanel(new FlowLayout());
+
+        top.add(new JLabel("Search:"));
+        top.add(searchField);
+        top.add(category);
+        top.add(search);
+
+        // Results Area
+        results.setEditable(false);
+
+        JScrollPane scrollPane = new JScrollPane(results);
+
+        // Bottom Panel
+        JPanel bottom = new JPanel(new FlowLayout());
+
+        bottom.add(prev);
+        bottom.add(next);
+        bottom.add(reserve);
+
+        // Main Layout
+        add(top, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+
+        // Status
+        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        statusPanel.add(status);
+
+        add(statusPanel, BorderLayout.PAGE_END);
+
+        search.addActionListener(e -> performSearch());
+
+        prev.addActionListener(e ->
+                status.setText("Previous Page"));
+
+        next.addActionListener(e ->
+                status.setText("Next Page"));
+
+        reserve.addActionListener(e ->
+                reserveBook());
+
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    void performSearch() {
+
+        String query = searchField.getText().trim();
+
+        if (query.isEmpty()) {
+            status.setText("Enter search keyword");
+            return;
+        }
+
+        results.setText(
+                "Search Results for: " + query
+                + "\nCategory: " + category.getSelectedItem()
+                + "\n\n1. Java Programming"
+                + "\n2. Data Structures"
+                + "\n3. Computer Networks"
+                + "\n4. Operating Systems"
+        );
+
+        status.setText("Search Completed");
+    }
+
+    void reserveBook() {
+
+        JOptionPane.showMessageDialog(this,
+                "Book Reserved Successfully");
+    }
+
+    public static void main(String[] args) {
+
+        SwingUtilities.invokeLater(() ->
+                new LibrarySearch());
+    }
+}
