@@ -1,0 +1,121 @@
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+class FeeService {
+
+    boolean validate(String regNo, double amount) {
+
+        if (regNo == null || regNo.trim().isEmpty()) {
+            return false;
+        }
+
+        if (amount <= 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    String pay(String regNo, double amount) {
+
+        if (!validate(regNo, amount)) {
+            return "Invalid registration number or amount";
+        }
+
+        return "Payment Successful";
+    }
+
+    String generateReceipt(String regNo, double amount) {
+
+        return "----- PAYMENT RECEIPT -----\n"
+                + "Register Number: " + regNo
+                + "\nAmount: Rs. " + amount
+                + "\nStatus: Paid";
+    }
+}
+
+public class FeeWindow extends JFrame {
+
+    private JTextField regNo = new JTextField(15);
+    private JTextField amount = new JTextField(15);
+
+    private JButton pay = new JButton("Pay");
+    private JButton clear = new JButton("Clear");
+    private JButton receipt = new JButton("Receipt");
+
+    private FeeService service = new FeeService();
+
+    FeeWindow() {
+
+        setTitle("Student Fee Payment");
+        setLayout(new GridLayout(4, 2, 10, 10));
+
+        add(new JLabel("Register Number"));
+        add(regNo);
+
+        add(new JLabel("Amount"));
+        add(amount);
+
+        add(pay);
+        add(clear);
+
+        add(receipt);
+        add(new JLabel(""));
+
+        pay.addActionListener(e -> payment());
+        clear.addActionListener(e -> clearFields());
+        receipt.addActionListener(e -> showReceipt());
+
+        setSize(400, 250);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+
+    private void payment() {
+
+        try {
+
+            String register = regNo.getText().trim();
+            double a = Double.parseDouble(amount.getText());
+
+            String result = service.pay(register, a);
+
+            JOptionPane.showMessageDialog(this, result);
+
+        } catch (NumberFormatException e) {
+
+            JOptionPane.showMessageDialog(this,
+                    "Enter a valid amount");
+        }
+    }
+
+    private void clearFields() {
+        regNo.setText("");
+        amount.setText("");
+    }
+
+    private void showReceipt() {
+
+        try {
+
+            String register = regNo.getText().trim();
+            double a = Double.parseDouble(amount.getText());
+
+            String result = service.generateReceipt(register, a);
+
+            JOptionPane.showMessageDialog(this, result);
+
+        } catch (NumberFormatException e) {
+
+            JOptionPane.showMessageDialog(this,
+                    "Enter a valid amount");
+        }
+    }
+
+    public static void main(String[] args) {
+
+        SwingUtilities.invokeLater(() -> new FeeWindow());
+    }
+}
